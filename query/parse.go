@@ -1,10 +1,10 @@
 package query
 
 import (
-	"errors"
-	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/7vars/leikari"
 )
 
 type tokenType int
@@ -285,13 +285,13 @@ func Parse(query string) (Node, error) {
 		return parser.parseNode(lowest)
 	}
 
-	return nil, errors.New("no valid query defined")
+	return nil, leikari.Errorln("", "no valid query defined")
 }
 
 func (p *parser) parseNode(tt tokenType) (Node, error) {
 	pf, ok := p.prefixParseFuncs[p.curToken.ttype]
 	if !ok {
-		return nil, fmt.Errorf("could not parse %s (%d)", p.curToken.literal, p.curToken.ttype)
+		return nil, leikari.Errorf("", "could not parse %s (%d)", p.curToken.literal, p.curToken.ttype)
 	}
 
 	left, err := pf()
@@ -330,7 +330,7 @@ func (p *parser) registerInfixParseFunc(tok tokenType, f infixParseFunc) {
 
 func (p *parser) parseInfix(left Node) (Condition, error) {
 	if left == nil {
-		return nil, errors.New("left node is nil")
+		return nil, leikari.Errorln("", "left node is nil")
 	}
 
 	tt := p.curToken.ttype
@@ -345,11 +345,11 @@ func (p *parser) parseInfix(left Node) (Condition, error) {
 	case eq,ne,co,sw,ew,gt,ge,lt,le:
 		ident, ok := left.(Identifier)
 		if !ok { 
-			return nil, fmt.Errorf("identifier expected %T found: %v", left, left)
+			return nil, leikari.Errorf("", "identifier expected %T found: %v", left, left)
 		}
 		value, ok := right.(Value)
 		if !ok {
-			return nil, fmt.Errorf("value expected %T found: %v", right, right)
+			return nil, leikari.Errorf("", "value expected %T found: %v", right, right)
 		}
 		
 		return newComparsion(ident, Operator(tt), value)
@@ -359,7 +359,7 @@ func (p *parser) parseInfix(left Node) (Condition, error) {
 		return Or(left, right), nil
 	}
 
-	return nil, fmt.Errorf("(%v) is not an operator", tt)
+	return nil, leikari.Errorf("", "(%v) is not an operator", tt)
 }
 
 func (p *parser) parseIdentifier() (Node, error) {
@@ -404,7 +404,7 @@ func (p *parser) parseGroup() (Node, error) {
 	grp := Group(exp)
 
 	if p.peekToken.ttype != rparen {
-		return nil, errors.New("missing close paren")
+		return nil, leikari.Errorln("", "missing close paren")
 	}
 
 	p.nextToken()

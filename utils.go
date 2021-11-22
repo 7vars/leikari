@@ -1,7 +1,6 @@
 package leikari
 
 import (
-	"errors"
 	"sync"
 	"time"
 )
@@ -17,6 +16,6 @@ func waitTimeout(wg *sync.WaitGroup, timeout time.Duration) error {
 	case <-done:
 		return nil
 	case <-time.After(timeout):
-		return errors.New("timeout reached")
+		return Errorln("", "timeout reached")
 	}
 }

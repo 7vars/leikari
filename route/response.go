@@ -3,6 +3,8 @@ package route
 import (
 	"encoding/json"
 	"encoding/xml"
+
+	"github.com/7vars/leikari"
 )
 
 type Response struct {
@@ -51,16 +53,13 @@ func (r Response) Marshal(f func(interface{}) ([]byte, error)) ([]byte, error) {
 }
 
 func ErrorResponse(err error) Response {
-	// TODO leikari specific errors
-	return ErrorResponseWithStatus(500, err)
+	e := leikari.MapError("", err)
+	return Response{
+		Status: e.StatusCode(),
+		Data: e,
+	}
 }
 
 func ErrorResponseWithStatus(status int, err error) Response {
-	// TODO leikari specific errors
-	return Response{
-		Status: status,
-		Data: map[string]interface{}{
-			"error": err.Error(),
-		},
-	}
+	return ErrorResponse(leikari.MapError("", err).WithStatusCode(status))
 }

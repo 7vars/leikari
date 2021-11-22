@@ -133,7 +133,9 @@ func newHandlerSettings(opts ...Option) HandlerSettings {
 				settings.MessageQueue = mq
 			}
 		case "async":
-			settings.Async = opt.Bool()
+			if asb, _ := opt.Bool(); asb {
+				settings.Async = true
+			}
 		}
 	}
 
@@ -253,7 +255,7 @@ func (hdl *handler) startup() error {
 		if starter, ok := hdl.receiver.(Startable); ok {
 			if err := starter.PreStart(ctx); err != nil {
 				hdl.Close()
-				return err
+				return MapError("", err)
 			}
 		}
 		go worker(ctx, hdl.messages, hdl.receiver, hdl.settings.Async)
@@ -363,7 +365,7 @@ func (hdl *handler) ExecuteHandler(receiver Receiver, opts ...Option) (ActorHand
 	
 	if _, exists := hdl.children[child.Name()]; exists {
 		child.Close()
-		return nil, fmt.Errorf("child %v already exists", child.Name())
+		return nil, Errorf("", "child %v already exists", child.Name())
 	}
 
 	if err := child.startup(); err != nil {

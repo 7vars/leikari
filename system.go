@@ -38,7 +38,9 @@ func newSystemSettings(opts ...Option) SystemSettings {
 	for _, opt := range opts {
 		switch opt.Name {
 		case "noSignature":
-			settings.NoSignature = opt.Bool()
+			if nos, _ := opt.Bool(); nos {
+				settings.NoSignature = true
+			}
 		}
 	}
 
@@ -169,11 +171,9 @@ func root() Actor {
 			
 		},
 		OnStart: func(ac ActorContext) error {
-			ac.Log().Info("start root system")
 			return nil
 		},
 		OnStop: func(ac ActorContext) error {
-			ac.Log().Info("root system stopped")
 			return nil
 		},
 	}

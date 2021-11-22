@@ -1,9 +1,5 @@
 package leikari
 
-import (
-	"errors"
-)
-
 type ActorExecutor interface {
 	Execute(Receiver, ...Option) (Ref, error)
 }
@@ -64,17 +60,17 @@ func (a Actor) Receive(ctx ActorContext, msg Message) {
 
 func (a Actor) PreStart(ctx ActorContext) error {
 	if a.OnReceive == nil {
-		return errors.New("receiver is nil")
+		return Errorln("", "receiver is nil")
 	}
 	if a.OnStart != nil {
-		return a.OnStart(ctx)
+		return MapError("", a.OnStart(ctx))
 	}
 	return nil
 }
 
 func (a Actor) PostStop(ctx ActorContext) error {
 	if a.OnStop != nil {
-		return a.OnStop(ctx)
+		return MapError("", a.OnStop(ctx))
 	}
 	return nil
 }

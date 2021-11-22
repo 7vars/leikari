@@ -1,7 +1,6 @@
 package leikari
 
 import (
-	"errors"
 	"sync"
 )
 
@@ -33,7 +32,7 @@ func (c *cache) Add(key string, value interface{}) error {
 	c.Lock()
 	defer c.Unlock()
 	if _, ok := c.items[key]; ok {
-		return errors.New("item exists")
+		return Errorln("", "item exists")
 	}
 	c.items[key] = value
 	return nil
@@ -46,7 +45,7 @@ func (c *cache) Replace(key string, value interface{}) error {
 		c.items[key] = value
 		return nil
 	}
-	return errors.New("item not exists")
+	return Errorln("", "item not exists")
 }
 
 func (c *cache) Get(key string) (interface{}, bool) {

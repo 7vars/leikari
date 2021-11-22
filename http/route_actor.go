@@ -1,7 +1,6 @@
 package http
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -91,7 +90,7 @@ func (ra *routeActor) PreStart(ctx leikari.ActorContext) error {
 
 func (ra *routeActor) Receive(ctx leikari.ActorContext, msg leikari.Message) {
 	if ra.def.Handle == nil {
-		msg.Reply(errors.New("route handler not defined"))
+		msg.Reply(leikari.Errorln("", "route handler not defined"))
 		return
 	}
 	if request, ok := msg.Value().(route.Request); ok {
@@ -103,7 +102,7 @@ func (ra *routeActor) Receive(ctx leikari.ActorContext, msg leikari.Message) {
 		msg.Reply(handle(request))
 		return
 	}
-	msg.Reply(fmt.Errorf("unkonwn type %T for Request", msg.Value()))
+	msg.Reply(leikari.Errorf("", "unkonwn type %T for Request", msg.Value()))
 }
 
 func (ra *routeActor) AsyncActor() bool {

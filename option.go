@@ -73,6 +73,7 @@ func (opt Option) Float64() (float64, bool) {
 	return v, ok
 }
 
-func (opt Option) Bool() bool {
-	return opt.Value.(bool)
+func (opt Option) Bool() (bool, bool) {
+	v, ok := opt.Value.(bool)
+	return v, ok
 }

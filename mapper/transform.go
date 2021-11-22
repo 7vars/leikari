@@ -1,9 +1,10 @@
 package mapper
 
 import (
-	"errors"
 	"reflect"
 	"strings"
+
+	"github.com/7vars/leikari"
 )
 
 type MapName struct {
@@ -21,7 +22,7 @@ func structValue(v interface{}) (reflect.Value, error) {
 		vvalue = vvalue.Elem()
 	}
 	if vvalue.Kind() != reflect.Struct {
-		return reflect.Value{}, errors.New("struct needed")
+		return reflect.Value{}, leikari.Errorln("", "struct needed")
 	}
 
 	return vvalue, nil
@@ -98,14 +99,14 @@ func transformValue(value reflect.Value) (interface{}, error) {
 	case reflect.Struct:
 		return Transform(value)
 	case reflect.Chan:
-		return nil, errors.New("chan not supported")
+		return nil, leikari.Errorln("", "chan not supported")
 	}
 	return value.Interface(), nil
 }
 
 func transformMapValue(value reflect.Value) (map[string]interface{}, error) {
 	if value.Type().Key().Kind() != reflect.String {
-		return nil, errors.New("only maps with string keys supported")		
+		return nil, leikari.Errorln("", "only maps with string keys supported")		
 	}
 
 	result := make(map[string]interface{})

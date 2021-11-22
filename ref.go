@@ -38,7 +38,7 @@ func (r *ref) RequestContext(ctx context.Context, v interface{}) (interface{}, e
 		return nil, ctx.Err()
 	case res := <-r.RequestChan(v):
 		if err, ok := res.(error); ok {
-			return nil, err
+			return nil, MapError("", err)
 		}	
 		return res, nil	
 	}

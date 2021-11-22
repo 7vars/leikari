@@ -1,7 +1,6 @@
 package crud
 
 import (
-	"errors"
 	"reflect"
 
 	"github.com/7vars/leikari"
@@ -10,13 +9,13 @@ import (
 
 func CRUD(system leikari.System, handler interface{}, name string, opts ...leikari.Option) (CrudRef, route.Route, error) {
 	if name == "" {
-		return nil, route.Route{}, errors.New("name is not defined")
+		return nil, route.Route{}, leikari.Errorln("", "name is not defined")
 	}
 	if handler == nil {
-		return nil, route.Route{}, errors.New("handler is nil")
+		return nil, route.Route{}, leikari.Errorln("", "handler is nil")
 	}
 	if reflect.TypeOf(handler).Kind() != reflect.Ptr {
-		return nil, route.Route{}, errors.New("handler must be a pointer")
+		return nil, route.Route{}, leikari.Errorln("", "handler must be a pointer")
 	}
 	
 	ref, err := system.Execute(newCrudActor(name, handler), opts...)

@@ -1,8 +1,9 @@
 package route
 
 import (
-	"errors"
 	"strings"
+
+	"github.com/7vars/leikari"
 )
 
 type HandleRequest func(Request) Response
@@ -34,7 +35,7 @@ func (r Route) RouteMiddleware() []Middleware {
 
 func (r Route) Validate() error {
 	if r.Path == "" {
-		return errors.New("path must not be empty")
+		return leikari.Errorln("", "path must not be empty")
 	}
 	return nil
 }

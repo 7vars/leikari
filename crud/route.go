@@ -39,9 +39,6 @@ func HandleQuery(ref CrudRef) func(r route.Request) route.Response {
 
 		result, err := ref.ListContext(r.Context(), query)
 		if err != nil {
-			if err == ErrNotFound {
-				return route.ErrorResponseWithStatus(404, err)
-			}
 			return route.ErrorResponse(err)
 		}
 		return route.Response{
@@ -54,7 +51,7 @@ func HandlePostQuery(ref CrudRef) func(r route.Request) route.Response {
 	return func(r route.Request) route.Response {
 		var query Query
 		if err := r.Encode(&query); err != nil {
-			return route.ErrorResponseWithStatus(404, err)
+			return route.ErrorResponseWithStatus(400, err)
 		}
 		if query.From < 0 {
 			query.From = 0
@@ -64,9 +61,6 @@ func HandlePostQuery(ref CrudRef) func(r route.Request) route.Response {
 		}
 		result, err := ref.ListContext(r.Context(), query)
 		if err != nil {
-			if err == ErrNotFound {
-				return route.ErrorResponseWithStatus(404, err)
-			}
 			return route.ErrorResponse(err)
 		}
 		return route.Response{
@@ -88,9 +82,6 @@ func HandleCreate(unmarshal func([]byte) (interface{}, error)) func(CrudRef) fun
 			}
 			evt, err := ref.CreateContext(r.Context(), entity)
 			if err != nil {
-				if err == ErrNotFound {
-					return route.ErrorResponseWithStatus(404, err)
-				}
 				return route.ErrorResponse(err)
 			}
 			return route.Response{
@@ -106,9 +97,6 @@ func HandleRead(ref CrudRef) func(r route.Request) route.Response {
 		id := r.GetVar("id")
 		evt, err := ref.ReadContext(r.Context(), id)
 		if err != nil {
-			if err == ErrNotFound {
-				return route.ErrorResponseWithStatus(404, err)
-			}
 			return route.ErrorResponse(err)
 		}
 		return route.Response{
@@ -131,9 +119,6 @@ func HandleUpdate(unmarshal func([]byte) (interface{}, error)) func(CrudRef) fun
 			}
 			evt, err := ref.UpdateContext(r.Context(), id, entity)
 			if err != nil {
-				if err == ErrNotFound {
-					return route.ErrorResponseWithStatus(404, err)
-				}
 				return route.ErrorResponse(err)
 			}
 			return route.Response{
@@ -149,9 +134,6 @@ func HandleDelete(ref CrudRef) func(r route.Request) route.Response {
 		id := r.GetVar("id")
 		evt, err := ref.DeleteContext(r.Context(), id)
 		if err != nil {
-			if err == ErrNotFound {
-				return route.ErrorResponseWithStatus(404, err)
-			}
 			return route.ErrorResponse(err)
 		}
 		return route.Response{

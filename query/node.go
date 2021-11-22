@@ -3,6 +3,8 @@ package query
 import (
 	"fmt"
 	"strconv"
+
+	"github.com/7vars/leikari"
 )
 
 type Type int 
@@ -96,7 +98,7 @@ func newValue(v interface{}) (Value, error) {
 	case string:
 		return newStringValue(x), nil
 	}
-	return nil, fmt.Errorf("unsupported type %T", v)
+	return nil, leikari.Errorf("", "unsupported type %T", v)
 }
 
 func newIntValue(i int64) Value {
@@ -203,7 +205,7 @@ func newComparsion(identifier Identifier, operator Operator, value Value) (Compa
 			value: value,
 		}, nil
 	default:
-		return nil, fmt.Errorf("unsupported operator %v", operator)
+		return nil, leikari.Errorf("", "unsupported operator %v", operator)
 	}
 }
 
