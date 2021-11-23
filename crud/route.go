@@ -6,12 +6,13 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/7vars/leikari/query"
 	"github.com/7vars/leikari/route"
 )
 
 func HandleQuery(ref CrudRef) func(r route.Request) route.Response {
 	return func(r route.Request) route.Response {
-		query := Query{
+		query := query.Query{
 			From: 0,
 			Size: 10, // TODO configure
 		}
@@ -49,7 +50,7 @@ func HandleQuery(ref CrudRef) func(r route.Request) route.Response {
 
 func HandlePostQuery(ref CrudRef) func(r route.Request) route.Response {
 	return func(r route.Request) route.Response {
-		var query Query
+		var query query.Query
 		if err := r.Encode(&query); err != nil {
 			return route.ErrorResponseWithStatus(400, err)
 		}

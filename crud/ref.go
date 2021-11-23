@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/7vars/leikari"
+	"github.com/7vars/leikari/query"
 )
 
 type CrudRef interface {
@@ -20,25 +21,25 @@ type CrudRef interface {
 	Delete(string) (*DeletedEvent, error)
 	DeleteContext(context.Context, string) (*DeletedEvent, error)
 
-	List(Query) (*QueryResult, error)
-	ListContext(context.Context, Query) (*QueryResult, error)
+	List(query.Query) (*query.QueryResult, error)
+	ListContext(context.Context, query.Query) (*query.QueryResult, error)
 }
 
-type crud struct {
+type crudRef struct {
 	leikari.Ref
 }
 
 func newCrudRef(ref leikari.Ref) CrudRef {
-	return &crud{
+	return &crudRef{
 		ref,
 	}
 }
 
-func (ref *crud) Create(v interface{}) (*CreatedEvent, error) {
+func (ref *crudRef) Create(v interface{}) (*CreatedEvent, error) {
 	return ref.CreateContext(context.Background(), v)
 }
 
-func (ref *crud) CreateContext(ctx context.Context, v interface{}) (*CreatedEvent, error) {
+func (ref *crudRef) CreateContext(ctx context.Context, v interface{}) (*CreatedEvent, error) {
 	res, err := ref.RequestContext(ctx, CreateCommand{v})
 	if err != nil {
 		return nil, err
@@ -49,11 +50,11 @@ func (ref *crud) CreateContext(ctx context.Context, v interface{}) (*CreatedEven
 	return nil, ErrUnknownCommand
 }
 
-func (ref *crud) Read(id string) (*ReadEvent, error) {
+func (ref *crudRef) Read(id string) (*ReadEvent, error) {
 	return ref.ReadContext(context.Background(), id)
 }
 
-func (ref *crud) ReadContext(ctx context.Context, id string) (*ReadEvent, error) {
+func (ref *crudRef) ReadContext(ctx context.Context, id string) (*ReadEvent, error) {
 	res, err := ref.RequestContext(ctx, ReadCommand{id})
 	if err != nil {
 		return nil, err
@@ -64,11 +65,11 @@ func (ref *crud) ReadContext(ctx context.Context, id string) (*ReadEvent, error)
 	return nil, ErrUnknownCommand
 }
 
-func (ref *crud) Update(id string, v interface{}) (*UpdatedEvent, error) {
+func (ref *crudRef) Update(id string, v interface{}) (*UpdatedEvent, error) {
 	return ref.UpdateContext(context.Background(), id, v)
 }
 
-func (ref *crud) UpdateContext(ctx context.Context, id string, v interface{}) (*UpdatedEvent, error) {
+func (ref *crudRef) UpdateContext(ctx context.Context, id string, v interface{}) (*UpdatedEvent, error) {
 	res, err := ref.RequestContext(ctx, UpdateCommand{id, v})
 	if err != nil {
 		return nil, err
@@ -79,11 +80,11 @@ func (ref *crud) UpdateContext(ctx context.Context, id string, v interface{}) (*
 	return nil, ErrUnknownCommand
 }
 
-func (ref *crud) Delete(id string) (*DeletedEvent, error) {
+func (ref *crudRef) Delete(id string) (*DeletedEvent, error) {
 	return ref.DeleteContext(context.Background(), id)
 }
 
-func (ref *crud) DeleteContext(ctx context.Context, id string) (*DeletedEvent, error) {
+func (ref *crudRef) DeleteContext(ctx context.Context, id string) (*DeletedEvent, error) {
 	res, err := ref.RequestContext(ctx, DeleteCommand{id})
 	if err != nil {
 		return nil, err
@@ -94,16 +95,16 @@ func (ref *crud) DeleteContext(ctx context.Context, id string) (*DeletedEvent, e
 	return nil, ErrUnknownCommand
 }
 
-func (ref *crud) List(qry Query) (*QueryResult, error) {
+func (ref *crudRef) List(qry query.Query) (*query.QueryResult, error) {
 	return ref.ListContext(context.Background(), qry)
 }
 
-func (ref *crud) ListContext(ctx context.Context, qry Query) (*QueryResult, error) {
+func (ref *crudRef) ListContext(ctx context.Context, qry query.Query) (*query.QueryResult, error) {
 	res, err := ref.RequestContext(ctx, qry)
 	if err != nil {
 		return nil, err
 	}
-	if result, ok := res.(*QueryResult); ok {
+	if result, ok := res.(*query.QueryResult); ok {
 		return result, nil
 	}
 	return nil, ErrUnknownCommand

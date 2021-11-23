@@ -2,6 +2,8 @@ package crud
 
 import (
 	"github.com/7vars/leikari"
+	"github.com/7vars/leikari/query"
+	"github.com/7vars/leikari/repository"
 )
 
 type CreateHandler interface {
@@ -18,10 +20,6 @@ type UpdateHandler interface {
 
 type DeleteHandler interface {
 	Delete(leikari.ActorContext, DeleteCommand) (*DeletedEvent, error)
-}
-
-type ListHandler interface {
-	List(leikari.ActorContext, Query) (*QueryResult, error)
 }
 
 func newCrudActor(name string, handler interface{}) leikari.Actor {
@@ -45,9 +43,9 @@ func newCrudActor(name string, handler interface{}) leikari.Actor {
 		delfunc = del.Delete
 	}
 
-	qryfunc := func(leikari.ActorContext, Query) (*QueryResult, error) { return nil, ErrNotFound }
-	if qry, ok := handler.(ListHandler); ok {
-		qryfunc = qry.List
+	qryfunc := func(leikari.ActorContext, query.Query) (*query.QueryResult, error) { return nil, ErrNotFound }
+	if qry, ok := handler.(repository.QueryHandler); ok {
+		qryfunc = qry.Query
 	}
 
 	receive := func(ctx leikari.ActorContext, v interface{}) (interface{}, error) {
@@ -60,7 +58,7 @@ func newCrudActor(name string, handler interface{}) leikari.Actor {
 			return upfunc(ctx, cmd)
 		case DeleteCommand:
 			return delfunc(ctx, cmd)
-		case Query:
+		case query.Query:
 			return qryfunc(ctx, cmd)
 		default:
 			return nil, ErrUnknownCommand
