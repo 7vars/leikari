@@ -2,10 +2,6 @@ package leikari
 
 import "fmt"
 
-var (
-	
-)
-
 type Error struct {
 	Code string `json:"code,omitempty"`
 	Message string `json:"error"`
@@ -17,7 +13,7 @@ func NewOf(code string, err error) *Error {
 	return &Error{
 		Code: code,
 		Message: err.Error(),
-	}	
+	}
 }
 
 func New(code string, msg string) *Error {

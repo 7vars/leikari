@@ -255,7 +255,7 @@ func (hdl *handler) startup() error {
 		if starter, ok := hdl.receiver.(Startable); ok {
 			if err := starter.PreStart(ctx); err != nil {
 				hdl.Close()
-				return MapError("", err)
+				return err
 			}
 		}
 		go worker(ctx, hdl.messages, hdl.receiver, hdl.settings.Async)

@@ -63,14 +63,14 @@ func (a Actor) PreStart(ctx ActorContext) error {
 		return Errorln("", "receiver is nil")
 	}
 	if a.OnStart != nil {
-		return MapError("", a.OnStart(ctx))
+		return a.OnStart(ctx)
 	}
 	return nil
 }
 
 func (a Actor) PostStop(ctx ActorContext) error {
 	if a.OnStop != nil {
-		return MapError("", a.OnStop(ctx))
+		return a.OnStop(ctx)
 	}
 	return nil
 }
