@@ -29,10 +29,10 @@ func RepositoryService(system leikari.System, handler interface{}, name string, 
 }
 
 type QueryFunc func(leikari.ActorContext, query.Query) (*query.QueryResult, error)
-type InsertFunc func(leikari.ActorContext, string, interface{}) error
-type SelectFunc func(leikari.ActorContext, string) (interface{}, error)
-type UpdateFunc func(leikari.ActorContext, string, interface{}) error
-type DeleteFunc func(leikari.ActorContext, string) (interface{}, error)
+type InsertFunc func(leikari.ActorContext, interface{}, interface{}) error
+type SelectFunc func(leikari.ActorContext, interface{}) (interface{}, error)
+type UpdateFunc func(leikari.ActorContext, interface{}, interface{}) error
+type DeleteFunc func(leikari.ActorContext, interface{}) (interface{}, error)
 
 type RepositoryHandler struct {
 	OnQuery QueryFunc

@@ -10,17 +10,17 @@ import (
 type RepositoryRef interface {
 	leikari.Ref
 	
-	Insert(string, interface{}) (*InsertedEvent, error)
-	InsertContext(context.Context, string, interface{}) (*InsertedEvent, error)
+	Insert(interface{}, interface{}) (*InsertedEvent, error)
+	InsertContext(context.Context, interface{}, interface{}) (*InsertedEvent, error)
 
-	Select(string) (*SelectedEvent, error) 
-	SelectContext(context.Context, string) (*SelectedEvent, error)
+	Select(interface{}) (*SelectedEvent, error) 
+	SelectContext(context.Context, interface{}) (*SelectedEvent, error)
 
-	Update(string, interface{}) (*UpdatedEvent, error)
-	UpdateContext(context.Context, string, interface{}) (*UpdatedEvent, error)
+	Update(interface{}, interface{}) (*UpdatedEvent, error)
+	UpdateContext(context.Context, interface{}, interface{}) (*UpdatedEvent, error)
 
-	Delete(string) (*DeletedEvent, error)
-	DeleteContext(context.Context, string) (*DeletedEvent, error)
+	Delete(interface{}) (*DeletedEvent, error)
+	DeleteContext(context.Context, interface{}) (*DeletedEvent, error)
 
 	Query(query.Query) (*query.QueryResult, error)
 	QueryContext(context.Context, query.Query) (*query.QueryResult, error)
@@ -36,11 +36,11 @@ func newRepositoryRef(ref leikari.Ref) RepositoryRef {
 	}
 }
 
-func (r *repoRef) Insert(id string, entity interface{}) (*InsertedEvent, error) {
+func (r *repoRef) Insert(id interface{}, entity interface{}) (*InsertedEvent, error) {
 	return r.InsertContext(context.Background(), id, entity)
 }
 
-func (r *repoRef) InsertContext(ctx context.Context, id string, entity interface{}) (*InsertedEvent, error) {
+func (r *repoRef) InsertContext(ctx context.Context, id interface{}, entity interface{}) (*InsertedEvent, error) {
 	res, err := r.RequestContext(ctx, InsertCommand{id, entity})
 	if err != nil {
 		return nil, err
@@ -51,11 +51,11 @@ func (r *repoRef) InsertContext(ctx context.Context, id string, entity interface
 	return nil, ErrUnknownCommand
 }
 
-func (r *repoRef) Select(id string) (*SelectedEvent, error)  {
+func (r *repoRef) Select(id interface{}) (*SelectedEvent, error)  {
 	return r.SelectContext(context.Background(), id)
 }
 
-func (r *repoRef) SelectContext(ctx context.Context, id string) (*SelectedEvent, error) {
+func (r *repoRef) SelectContext(ctx context.Context, id interface{}) (*SelectedEvent, error) {
 	res, err := r.RequestContext(ctx, SelectCommand{id})
 	if err != nil {
 		return nil, err
@@ -66,11 +66,11 @@ func (r *repoRef) SelectContext(ctx context.Context, id string) (*SelectedEvent,
 	return nil, ErrUnknownCommand
 }
 
-func (r *repoRef) Update(id string, entity interface{}) (*UpdatedEvent, error) {
+func (r *repoRef) Update(id interface{}, entity interface{}) (*UpdatedEvent, error) {
 	return r.UpdateContext(context.Background(), id, entity)
 }
 
-func (r *repoRef) UpdateContext(ctx context.Context, id string, entity interface{}) (*UpdatedEvent, error) {
+func (r *repoRef) UpdateContext(ctx context.Context, id interface{}, entity interface{}) (*UpdatedEvent, error) {
 	res, err := r.RequestContext(ctx, UpdateCommand{id, entity})
 	if err != nil {
 		return nil, err
@@ -81,11 +81,11 @@ func (r *repoRef) UpdateContext(ctx context.Context, id string, entity interface
 	return nil, ErrUnknownCommand
 }
 
-func (r *repoRef) Delete(id string) (*DeletedEvent, error) {
+func (r *repoRef) Delete(id interface{}) (*DeletedEvent, error) {
 	return r.DeleteContext(context.Background(), id)
 }
 
-func (r *repoRef) DeleteContext(ctx context.Context, id string) (*DeletedEvent, error) {
+func (r *repoRef) DeleteContext(ctx context.Context, id interface{}) (*DeletedEvent, error) {
 	res, err := r.RequestContext(ctx, DeleteCommand{id})
 	if err != nil {
 		return nil, err

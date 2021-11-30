@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"reflect"
+
 	"github.com/7vars/leikari"
 	"github.com/7vars/leikari/query"
 )
@@ -25,7 +27,19 @@ type QueryHandler interface {
 	Query(leikari.ActorContext, query.Query) (*query.QueryResult, error)
 }
 
-func newRepositoryActor(name string, handler interface{}) leikari.Actor {
+var (
+	insertHandlerType = reflect.TypeOf((*InsertHandler)(nil)).Elem()
+	updateHandlerType = reflect.TypeOf((*UpdateHandler)(nil)).Elem()
+	selectHandlerType = reflect.TypeOf((*SelectHandler)(nil)).Elem()
+	deleteHandlerType = reflect.TypeOf((*DeleteHandler)(nil)).Elem()
+)
+
+func newRepositoryActor(name string, v interface{}) leikari.Actor {
+	handler := v
+	if !leikari.CheckImplementsOneOf(reflect.TypeOf(v), insertHandlerType, updateHandlerType, selectHandlerType, deleteHandlerType) {
+		handler = wrap(v)
+	}
+
 	insfunc := func(leikari.ActorContext, InsertCommand) (*InsertedEvent, error) { return nil, ErrNotFound }
 	if hdl, ok := handler.(InsertHandler); ok {
 		insfunc = hdl.Insert
