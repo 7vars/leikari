@@ -8,7 +8,7 @@ import (
 	"github.com/7vars/leikari/query"
 )
 
-func RepositoryService(system leikari.System, handler interface{}, name string, opts ...leikari.Option) (RepositoryRef, error) {
+func RepositoryService(system leikari.ActorExecutor, handler interface{}, name string, opts ...leikari.Option) (RepositoryRef, error) {
 	if name == "" {
 		return nil, leikari.Errorln("", "name is not defined")
 	}

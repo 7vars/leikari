@@ -9,7 +9,7 @@ import (
 	"github.com/7vars/leikari/route"
 )
 
-func CrudService(system leikari.System, handler interface{}, name string, opts ...leikari.Option) (CrudRef, route.Route, error) {
+func CrudService(system leikari.ActorExecutor, handler interface{}, name string, opts ...leikari.Option) (CrudRef, route.Route, error) {
 	if name == "" {
 		return nil, route.Route{}, leikari.Errorln("", "name is not defined")
 	}
