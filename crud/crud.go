@@ -29,7 +29,7 @@ func CrudService(system leikari.System, handler interface{}, name string, opts .
 	return crudRef, newCrudRoute(name, crudRef, handler), nil
 }
 
-type QueryFunc func(leikari.ActorContext, query.Query) ([]interface{}, int, error)
+type QueryFunc func(leikari.ActorContext, query.Query) (*query.QueryResult, error)
 type CreateFunc func(leikari.ActorContext, interface{}) (string, interface{}, error)
 type ReadFunc func(leikari.ActorContext, string) (interface{}, error)
 type UpdateFunc func(leikari.ActorContext, string, interface{}) error
@@ -113,21 +113,13 @@ func (a *CrudHandler) Delete(ctx leikari.ActorContext, cmd DeleteCommand) (*Dele
 	return nil, ErrNotFound
 }
 
-func (a *CrudHandler) List(ctx leikari.ActorContext, qry query.Query) (*query.QueryResult, error) {
+func (a *CrudHandler) Query(ctx leikari.ActorContext, qry query.Query) (*query.QueryResult, error) {
 	if a.OnQuery != nil {
-		start := time.Now()
-		result, cnt, err := a.OnQuery(ctx, qry)
+		result, err := a.OnQuery(ctx, qry)
 		if err != nil {
 			return nil, err
 		}
-		return &query.QueryResult{
-			From: qry.From,
-			Size: len(result),
-			Count: cnt,
-			Result: result,
-			Timestamp: time.Now(),
-			Took: time.Now().UnixMilli() - start.UnixMilli(),
-		}, nil
+		return result, nil
 	}
 	return nil, ErrNotFound
 }
