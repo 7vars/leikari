@@ -8,8 +8,10 @@ import (
 	"github.com/7vars/leikari/query"
 )
 
-func Check(node query.Node, v interface{}, mapname ...MapName) bool {
+func ApplyFilter(node query.Node, v interface{}, mapname ...MapName) bool {
 	switch n := node.(type) {
+	case query.All:
+		return true
 	case query.Comparsion:
 		switch n.Value().Type() {
 		case query.INT:
@@ -40,9 +42,9 @@ func Check(node query.Node, v interface{}, mapname ...MapName) bool {
 	case query.PrefixCondition:
 		switch n.Prefix() {
 		case query.GROUP:
-			return Check(n.Right(), v, mapname...)
+			return ApplyFilter(n.Right(), v, mapname...)
 		case query.NOT:
-			return !Check(n.Right(), v, mapname...)
+			return !ApplyFilter(n.Right(), v, mapname...)
 		case query.PR:
 			if ident, ok := n.Right().(query.Identifier); ok {
 				_, ok := Value(ident.Name(), v, mapname...)
@@ -52,9 +54,9 @@ func Check(node query.Node, v interface{}, mapname ...MapName) bool {
 	case query.LogicalCondition:
 		switch n.Logical() {
 		case query.AND:
-			return Check(n.Left(), v, mapname...) && Check(n.Right(), v, mapname...)
+			return ApplyFilter(n.Left(), v, mapname...) && ApplyFilter(n.Right(), v, mapname...)
 		case query.OR:
-			return Check(n.Left(), v, mapname...) || Check(n.Right(), v, mapname...)
+			return ApplyFilter(n.Left(), v, mapname...) || ApplyFilter(n.Right(), v, mapname...)
 		}
 	}
 	return false
