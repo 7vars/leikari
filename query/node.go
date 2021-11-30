@@ -10,7 +10,8 @@ import (
 type Type int 
 
 const (
-	IDENT Type = iota + 18
+	ALL Type = -1
+	IDENT Type = iota + 17
 	INT
 	FLOAT
 	BOOL
@@ -50,6 +51,12 @@ type Node interface {
 	Type() Type
 	String() string
 }
+
+type All bool
+
+func (All) Type() Type { return ALL }
+
+func (All) String() string { return "" }
 
 type Identifier interface {
 	Node

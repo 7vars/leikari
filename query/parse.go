@@ -279,6 +279,10 @@ func newParser(query string) *parser {
 }
 
 func Parse(query string) (Node, error) {
+	if query == "" {
+		return All(true), nil
+	}
+
 	parser := newParser(query)
 
 	if parser.curToken.ttype != eof {

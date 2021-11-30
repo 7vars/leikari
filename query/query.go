@@ -8,10 +8,14 @@ type Query struct {
 	Query string `json:"query"`
 }
 
+func (qry Query) Parse() (Node, error) {
+	return Parse(qry.Query)
+}
+
 type QueryResult struct {
 	From int `json:"from"`
-	Size int `json:"size,omitempty"`
-	Count int `json:"count,omitempty"`
+	Size int `json:"size"`
+	Count int `json:"count"`
 	Result []interface{} `json:"result,omitempty"`
 	Timestamp time.Time `json:"timestamp,omitempty"`
 	Took int64 `json:"millis,omitempty"`
