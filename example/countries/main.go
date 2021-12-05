@@ -60,7 +60,7 @@ type CountryRepo struct {
 	countries []*Country
 }
 
-func NewCountryRepo() *CountryRepo {
+func newCountryRepo() *CountryRepo {
 	return &CountryRepo{
 		url: "https://datahub.io/core/country-codes/r/0.json",
 		countries: make([]*Country, 0),
@@ -136,6 +136,20 @@ func (repo *CountryRepo) Query(ctx leikari.ActorContext, qry query.Query) (*quer
 	}, nil
 }
 
+func (repo *CountryRepo) Insert(ctx leikari.ActorContext, entity *Country) (string, error) {
+	id := entity.ISO
+	if id == "" {
+		return "", repository.ErrIdNotPresent
+	}
+	if e, _ := repo.Select(ctx, id); e != nil {
+		return "", repository.ErrEntityExists
+	}
+	repo.Lock()
+	defer repo.Unlock()
+	repo.countries = append(repo.countries, entity)
+	return id, nil
+}
+
 func (repo *CountryRepo) Select(ctx leikari.ActorContext, id string) (*Country, error) {
 	res, err := repo.Query(ctx, query.Query{ From: 0, Size: 1, Query: fmt.Sprintf("iso EQ '%v'", id) })
 	if err != nil {
@@ -147,8 +161,40 @@ func (repo *CountryRepo) Select(ctx leikari.ActorContext, id string) (*Country, 
 	return nil, repository.ErrNotFound
 }
 
+func (repo *CountryRepo) Update(ctx leikari.ActorContext, id string, entity *Country) error {
+	repo.Lock()
+	defer repo.Unlock()
+	for i, c := range repo.countries {
+		if c.ISO == id {
+			entity.ISO = id
+			repo.countries[i] = entity
+			return nil
+		}
+	}
+	return repository.ErrNotFound
+}
+
+func (repo *CountryRepo) Delete(ctx leikari.ActorContext, id string) (*Country, error) {
+	repo.Lock()
+	defer repo.Unlock()
+	for i, c := range repo.countries {
+		if c.ISO == id {
+			repo.countries = append(repo.countries[:i], repo.countries[i+1:]...)
+			return c, nil
+		}
+	}
+	return nil, repository.ErrNotFound
+}
+
 func newCrudHandler(ref repository.RepositoryRef) *crud.CrudHandler {
 	return &crud.CrudHandler{
+		OnCreate: func(ac leikari.ActorContext, entity interface{}) (string, interface{}, error) {
+			evt, err := ref.Insert(entity)
+			if err != nil {
+				return "", nil, err
+			}
+			return fmt.Sprintf("%v", evt.Id), evt.Entity, nil
+		},
 		OnQuery: func(ac leikari.ActorContext, qry query.Query) (*query.QueryResult, error) {
 			return ref.Query(qry)
 		},
@@ -159,13 +205,33 @@ func newCrudHandler(ref repository.RepositoryRef) *crud.CrudHandler {
 			}
 			return res.Entity, nil
 		},
+		OnUpdate: func(ac leikari.ActorContext, id string, entity interface{}) error {
+			if _, err := ref.Update(strings.ToUpper(id), entity); err != nil {
+				return err
+			}
+			return nil
+		},
+		OnDelete: func(ac leikari.ActorContext, id string) (interface{}, error) {
+			res, err := ref.Delete(strings.ToUpper(id))
+			if err != nil {
+				return nil, err
+			}
+			return res.Entity, nil
+		},
+		OnUnmarshal: func(b []byte) (interface{}, error) {
+			var country Country
+			if err := json.Unmarshal(b, &country); err != nil {
+				return nil, err
+			}
+			return &country, nil
+		},
 	}
 }
 
 func main() {
 	sys := leikari.NewSystem()
 
-	repoRef, err := repository.RepositoryService(sys, NewCountryRepo(), "country-repo")
+	repoRef, err := repository.RepositoryService(sys, newCountryRepo(), "country-repo")
 	if err != nil {
 		panic(err)
 	}
