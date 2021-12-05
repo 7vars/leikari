@@ -81,13 +81,13 @@ func HandleCreate(unmarshal func([]byte) (interface{}, error)) func(CrudRef) fun
 			if err != nil {
 				return route.ErrorResponseWithStatus(400, err)
 			}
-			evt, err := ref.CreateContext(r.Context(), entity)
+			env, err := ref.CreateContext(r.Context(), entity)
 			if err != nil {
 				return route.ErrorResponse(err)
 			}
 			return route.Response{
 				Status: 201,
-				Data: evt,
+				Data: env.Entity,
 			}
 		}
 	}
@@ -124,7 +124,7 @@ func HandleUpdate(unmarshal func([]byte) (interface{}, error)) func(CrudRef) fun
 			}
 			return route.Response{
 				Status: 200,
-				Data: evt,
+				Data: evt.Entity,
 			}
 		}
 	}
@@ -138,7 +138,7 @@ func HandleDelete(ref CrudRef) func(r route.Request) route.Response {
 			return route.ErrorResponse(err)
 		}
 		return route.Response{
-			Data: evt,
+			Data: evt.Entity,
 		}
 	}
 }
