@@ -3,7 +3,6 @@ package repository
 import "time"
 
 type InsertCommand struct {
-	Id interface{}
 	Entity interface{}
 }
 

@@ -29,7 +29,7 @@ func RepositoryService(system leikari.ActorExecutor, handler interface{}, name s
 }
 
 type QueryFunc func(leikari.ActorContext, query.Query) (*query.QueryResult, error)
-type InsertFunc func(leikari.ActorContext, interface{}, interface{}) error
+type InsertFunc func(leikari.ActorContext, interface{}) (interface{}, error)
 type SelectFunc func(leikari.ActorContext, interface{}) (interface{}, error)
 type UpdateFunc func(leikari.ActorContext, interface{}, interface{}) error
 type DeleteFunc func(leikari.ActorContext, interface{}) (interface{}, error)
@@ -48,11 +48,12 @@ type RepositoryHandler struct {
 func (rh *RepositoryHandler) Insert(ctx leikari.ActorContext, cmd InsertCommand) (*InsertedEvent, error) {
 	if rh.OnInsert != nil {
 		start := time.Now()
-		if err := rh.OnInsert(ctx, cmd.Id, cmd.Entity); err != nil {
+		id, err := rh.OnInsert(ctx, cmd.Entity)
+		if err != nil {
 			return nil, err
 		}
 		return &InsertedEvent{
-			Id: cmd.Id,
+			Id: id,
 			Entity: cmd.Entity,
 			Timestamp: time.Now(),
 			Took: time.Now().UnixMilli() - start.UnixMilli(),

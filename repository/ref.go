@@ -10,8 +10,8 @@ import (
 type RepositoryRef interface {
 	leikari.Ref
 	
-	Insert(interface{}, interface{}) (*InsertedEvent, error)
-	InsertContext(context.Context, interface{}, interface{}) (*InsertedEvent, error)
+	Insert(interface{}) (*InsertedEvent, error)
+	InsertContext(context.Context, interface{}) (*InsertedEvent, error)
 
 	Select(interface{}) (*SelectedEvent, error) 
 	SelectContext(context.Context, interface{}) (*SelectedEvent, error)
@@ -36,12 +36,12 @@ func newRepositoryRef(ref leikari.Ref) RepositoryRef {
 	}
 }
 
-func (r *repoRef) Insert(id interface{}, entity interface{}) (*InsertedEvent, error) {
-	return r.InsertContext(context.Background(), id, entity)
+func (r *repoRef) Insert(entity interface{}) (*InsertedEvent, error) {
+	return r.InsertContext(context.Background(), entity)
 }
 
-func (r *repoRef) InsertContext(ctx context.Context, id interface{}, entity interface{}) (*InsertedEvent, error) {
-	res, err := r.RequestContext(ctx, InsertCommand{id, entity})
+func (r *repoRef) InsertContext(ctx context.Context, entity interface{}) (*InsertedEvent, error) {
+	res, err := r.RequestContext(ctx, InsertCommand{entity})
 	if err != nil {
 		return nil, err
 	}
