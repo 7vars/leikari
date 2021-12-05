@@ -43,6 +43,7 @@ type CrudHandler struct {
 	OnQuery QueryFunc
 	OnStart func(leikari.ActorContext) error
 	OnStop func(leikari.ActorContext) error
+	OnUnmarshal func([]byte) (interface{}, error)
 	Sync bool
 }
 
@@ -136,6 +137,13 @@ func (a *CrudHandler) PostStop(ctx leikari.ActorContext) error {
 		return a.OnStop(ctx)
 	}
 	return nil
+}
+
+func (a *CrudHandler) HandleUnmarshal(data []byte) (interface{}, error) {
+	if a.OnUnmarshal != nil {
+		return a.OnUnmarshal(data)
+	}
+	return HandleUnmarshal(data)
 }
 
 func (a *CrudHandler) AsyncActor() bool { return !a.Sync }
