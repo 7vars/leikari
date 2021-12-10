@@ -42,6 +42,7 @@ type RepositoryHandler struct {
 	OnDelete DeleteFunc
 	OnStart func(leikari.ActorContext) error
 	OnStop func(leikari.ActorContext) error
+	OnReceive func(leikari.ActorContext, leikari.Message)
 	Sync bool
 }
 
@@ -124,6 +125,14 @@ func (rh *RepositoryHandler) Query(ctx leikari.ActorContext, qry query.Query) (*
 		return result, nil
 	}
 	return nil, ErrNotFound
+}
+
+func (rh *RepositoryHandler) Receive(ctx leikari.ActorContext, msg leikari.Message) {
+	if rh.OnReceive != nil {
+		rh.OnReceive(ctx, msg)
+		return
+	}
+	msg.Reply(leikari.ErrUnknownCommand)
 }
 
 func (rh *RepositoryHandler) PreStart(ctx leikari.ActorContext) error {

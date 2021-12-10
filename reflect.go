@@ -149,3 +149,22 @@ func PostStopFunc(v interface{}) func(ActorContext) error {
 	}
 	return func(ac ActorContext) error { return nil }
 }
+
+func ReceiveMethod(v interface{}) (reflect.Value, bool) {
+	if mv, ok := MethodByName(v, "Receive"); ok {
+		mt := mv.Type()
+		if CheckIn(mt, ActorContextType, MessageType) && mt.NumOut() == 0 {
+			return mv, true
+		}
+	}
+	return reflect.ValueOf(nil), false
+}
+
+func ReceiveFunc(v interface{}) func(ActorContext, Message) {
+	if val, ok := ReceiveMethod(v); ok {
+		return func(ctx ActorContext, msg Message) {
+			val.Call([]reflect.Value{ reflect.ValueOf(ctx), reflect.ValueOf(msg) })
+		}
+	}
+	return func(ctx ActorContext, msg Message) { msg.Reply(ErrUnknownCommand) }  // TODO maybe reply with done?
+}

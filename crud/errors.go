@@ -10,5 +10,4 @@ var (
 	ErrNotFound = repository.ErrNotFound
 	ErrNotUpdated = leikari.Errorln("", "entity not updated")
 	ErrNotDeleted = leikari.Errorln("", "entity not deleted")
-	ErrUnknownCommand = repository.ErrUnknownCommand
 )

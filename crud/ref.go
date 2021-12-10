@@ -47,7 +47,7 @@ func (ref *crudRef) CreateContext(ctx context.Context, v interface{}) (*CreatedE
 	if result, ok := res.(*CreatedEvent); ok {
 		return result, nil
 	}
-	return nil, ErrUnknownCommand
+	return nil, leikari.ErrUnknownCommand
 }
 
 func (ref *crudRef) Read(id string) (*ReadEvent, error) {
@@ -62,7 +62,7 @@ func (ref *crudRef) ReadContext(ctx context.Context, id string) (*ReadEvent, err
 	if result, ok := res.(*ReadEvent); ok {
 		return result, nil
 	}
-	return nil, ErrUnknownCommand
+	return nil, leikari.ErrUnknownCommand
 }
 
 func (ref *crudRef) Update(id string, v interface{}) (*UpdatedEvent, error) {
@@ -77,7 +77,7 @@ func (ref *crudRef) UpdateContext(ctx context.Context, id string, v interface{})
 	if result, ok := res.(*UpdatedEvent); ok {
 		return result, nil
 	}
-	return nil, ErrUnknownCommand
+	return nil, leikari.ErrUnknownCommand
 }
 
 func (ref *crudRef) Delete(id string) (*DeletedEvent, error) {
@@ -92,7 +92,7 @@ func (ref *crudRef) DeleteContext(ctx context.Context, id string) (*DeletedEvent
 	if result, ok := res.(*DeletedEvent); ok {
 		return result, nil
 	}
-	return nil, ErrUnknownCommand
+	return nil, leikari.ErrUnknownCommand
 }
 
 func (ref *crudRef) List(qry query.Query) (*query.QueryResult, error) {
@@ -107,5 +107,5 @@ func (ref *crudRef) ListContext(ctx context.Context, qry query.Query) (*query.Qu
 	if result, ok := res.(*query.QueryResult); ok {
 		return result, nil
 	}
-	return nil, ErrUnknownCommand
+	return nil, leikari.ErrUnknownCommand
 }

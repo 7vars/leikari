@@ -61,7 +61,7 @@ func newCrudActor(name string, handler interface{}) leikari.Actor {
 		case query.Query:
 			return qryfunc(ctx, cmd)
 		default:
-			return nil, ErrUnknownCommand
+			return nil, leikari.ErrUnknownCommand
 		}
 	}
 
@@ -75,6 +75,11 @@ func newCrudActor(name string, handler interface{}) leikari.Actor {
 		stop = hdl.PostStop
 	}
 
+	receiver := func(ctx leikari.ActorContext, msg leikari.Message) { msg.Reply(leikari.ErrUnknownCommand) }
+	if hdl, ok := handler.(leikari.Receiver); ok {
+		receiver = hdl.Receive
+	}
+
 	async := true
 	if hdl, ok := handler.(leikari.AsyncActor); ok {
 		async = hdl.AsyncActor()
@@ -86,6 +91,10 @@ func newCrudActor(name string, handler interface{}) leikari.Actor {
 		OnReceive: func(ctx leikari.ActorContext, msg leikari.Message) {
 			result, err := receive(ctx, msg.Value())
 			if err != nil {
+				if err == leikari.ErrUnknownCommand {
+					receiver(ctx, msg)
+					return
+				}
 				msg.Reply(err)
 				return
 			}

@@ -123,6 +123,7 @@ func wrap(v interface{}) *RepositoryHandler {
 		OnQuery: queryFunc(v),
 		OnStart: leikari.PreStartFunc(v),
 		OnStop: leikari.PostStopFunc(v),
+		OnReceive: leikari.ReceiveFunc(v),
 	}
 
 	return repo

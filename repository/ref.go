@@ -48,7 +48,7 @@ func (r *repoRef) InsertContext(ctx context.Context, entity interface{}) (*Inser
 	if result, ok := res.(*InsertedEvent); ok {
 		return result, nil
 	}
-	return nil, ErrUnknownCommand
+	return nil, leikari.ErrUnknownCommand
 }
 
 func (r *repoRef) Select(id interface{}) (*SelectedEvent, error)  {
@@ -63,7 +63,7 @@ func (r *repoRef) SelectContext(ctx context.Context, id interface{}) (*SelectedE
 	if result, ok := res.(*SelectedEvent); ok {
 		return result, nil
 	}
-	return nil, ErrUnknownCommand
+	return nil, leikari.ErrUnknownCommand
 }
 
 func (r *repoRef) Update(id interface{}, entity interface{}) (*UpdatedEvent, error) {
@@ -78,7 +78,7 @@ func (r *repoRef) UpdateContext(ctx context.Context, id interface{}, entity inte
 	if result, ok := res.(*UpdatedEvent); ok {
 		return result, nil
 	}
-	return nil, ErrUnknownCommand
+	return nil, leikari.ErrUnknownCommand
 }
 
 func (r *repoRef) Delete(id interface{}) (*DeletedEvent, error) {
@@ -93,7 +93,7 @@ func (r *repoRef) DeleteContext(ctx context.Context, id interface{}) (*DeletedEv
 	if result, ok := res.(*DeletedEvent); ok {
 		return result, nil
 	}
-	return nil, ErrUnknownCommand
+	return nil, leikari.ErrUnknownCommand
 }
 
 func (r *repoRef) Query(qry query.Query) (*query.QueryResult, error) {
@@ -108,5 +108,5 @@ func (r *repoRef) QueryContext(ctx context.Context, qry query.Query) (*query.Que
 	if result, ok := res.(*query.QueryResult); ok {
 		return result, nil
 	}
-	return nil, ErrUnknownCommand
+	return nil, leikari.ErrUnknownCommand
 }

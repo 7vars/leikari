@@ -41,6 +41,7 @@ type CrudHandler struct {
 	OnUpdate UpdateFunc
 	OnDelete DeleteFunc
 	OnQuery QueryFunc
+	OnReceive func(leikari.ActorContext, leikari.Message)
 	OnStart func(leikari.ActorContext) error
 	OnStop func(leikari.ActorContext) error
 	OnUnmarshal func([]byte) (interface{}, error)
@@ -123,6 +124,14 @@ func (a *CrudHandler) Query(ctx leikari.ActorContext, qry query.Query) (*query.Q
 		return result, nil
 	}
 	return nil, ErrNotFound
+}
+
+func (a *CrudHandler) Receive(ctx leikari.ActorContext, msg leikari.Message) {
+	if a.OnReceive != nil {
+		a.OnReceive(ctx, msg)
+		return
+	}
+	msg.Reply(leikari.ErrUnknownCommand)
 }
 
 func (a *CrudHandler) PreStart(ctx leikari.ActorContext) error {

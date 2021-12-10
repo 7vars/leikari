@@ -2,6 +2,10 @@ package leikari
 
 import "fmt"
 
+var (
+	ErrUnknownCommand = Errorln("", "unknown command")
+)
+
 type Error struct {
 	Code string `json:"code,omitempty"`
 	Message string `json:"error"`
