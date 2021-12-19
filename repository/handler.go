@@ -27,6 +27,14 @@ type QueryHandler interface {
 	Query(leikari.ActorContext, query.Query) (*query.QueryResult, error)
 }
 
+type Repository interface {
+	InsertHandler
+	SelectHandler
+	UpdateHandler
+	DeleteHandler
+	QueryHandler
+}
+
 var (
 	insertHandlerType = reflect.TypeOf((*InsertHandler)(nil)).Elem()
 	updateHandlerType = reflect.TypeOf((*UpdateHandler)(nil)).Elem()

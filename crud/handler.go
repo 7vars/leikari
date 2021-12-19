@@ -22,6 +22,14 @@ type DeleteHandler interface {
 	Delete(leikari.ActorContext, DeleteCommand) (*DeletedEvent, error)
 }
 
+type Crud interface {
+	CreateHandler
+	ReadHandler
+	UpdateHandler
+	DeleteHandler
+	repository.QueryHandler
+}
+
 func newCrudActor(name string, handler interface{}) leikari.Actor {
 	crfunc := func(leikari.ActorContext,CreateCommand) (*CreatedEvent, error) { return nil, ErrNotFound }
 	if cr, ok := handler.(CreateHandler); ok {
