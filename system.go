@@ -72,7 +72,7 @@ func NewSystem(opts ... Option) System {
 	sys := &system{
 		settings: newSystemSettings(opts...),
 		exitChan: make(chan int, 1),
-		log: SysLogger(),
+		log: newLogger(),
 	}
 
 	if !sys.settings.NoSignature {

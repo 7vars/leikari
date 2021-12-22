@@ -109,7 +109,7 @@ type HandlerSettings struct {
 func newHandlerSettings(opts ...Option) HandlerSettings {
 	settings := HandlerSettings{
 		Name: GenerateName(),
-		Log: SysLogger(),
+		Log: newLogger(),
 		WorkerPool: 1,
 		MessageQueue: 1000,
 	}

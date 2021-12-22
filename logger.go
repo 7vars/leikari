@@ -49,18 +49,18 @@ type sysLogger struct{
 	logger log.Logger
 }
 
-func SysLogger() Logger {
-	return NewSysLogger(*log.Default())
+func newLogger() Logger {
+	return newSysLogger(*log.Default())
 }
 
-func NewSysLogger(logger log.Logger) Logger {
+func newSysLogger(logger log.Logger) Logger {
 	return &sysLogger{
 		logger: logger,
 	}
 }
 
 func (l *sysLogger) ForName(name string) Logger {
-	return NewSysLogger(*log.New(os.Stderr, name+" ", l.logger.Flags()))
+	return newSysLogger(*log.New(os.Stderr, name+" ", l.logger.Flags()))
 }
 
 func (l *sysLogger) Debug(v ...interface{}) {
