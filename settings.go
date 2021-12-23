@@ -22,12 +22,15 @@ func initSettings() {
 
 		viper.ReadInConfig()
 
+		venv := viper.New()
 		for _, env := range os.Environ() {
 			if strings.HasPrefix(strings.ToLower(env), "leikari_") {
 				pair := strings.SplitN(env, "=", 2)
-				viper.Set(strings.ReplaceAll(strings.ToLower(pair[0]), "_", "."), pair[1])
+				venv.Set(strings.ReplaceAll(strings.ToLower(pair[0]), "_", "."), pair[1])
 			}
 		}
+
+		viper.MergeConfigMap(venv.AllSettings())
 		
 		settingsInit = true
 	}
@@ -44,6 +47,8 @@ type Settings interface {
 	GetTime(string) time.Time
 	GetDuration(string) time.Duration
 	IsSet(string) bool
+
+	AllSettings() map[string]interface{}
 
 	GetDefault(string, interface{}) interface{}
 	GetDefaultBool(string, bool) bool
