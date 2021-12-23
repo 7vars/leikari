@@ -42,7 +42,7 @@ var (
 	deleteHandlerType = reflect.TypeOf((*DeleteHandler)(nil)).Elem()
 )
 
-func newRepositoryActor(name string, v interface{}) leikari.Actor {
+func newRepositoryActor(v interface{}) leikari.Actor {
 	handler := v
 	if !leikari.CheckImplementsOneOf(reflect.TypeOf(v), insertHandlerType, updateHandlerType, selectHandlerType, deleteHandlerType) {
 		handler = wrap(v)
@@ -111,7 +111,6 @@ func newRepositoryActor(name string, v interface{}) leikari.Actor {
 	}
 
 	return leikari.Actor{
-		Name: name,
 		OnReceive: func(ctx leikari.ActorContext, msg leikari.Message) {
 			result, err := receive(ctx, msg.Value())
 			if err != nil {

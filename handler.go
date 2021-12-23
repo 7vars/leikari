@@ -9,7 +9,6 @@ import (
 
 type actorContext struct {
 	name string
-	log Logger
 	handler ActorHandler
 	self Ref
 	done chan struct{}
@@ -20,7 +19,11 @@ func (ctx *actorContext) Name() string {
 }
 
 func (ctx *actorContext) Log() Logger {
-	return ctx.log
+	return ctx.handler.Log()
+}
+
+func (ctx *actorContext) Settings() Settings {
+	return ctx.handler.Settings()
 }
 
 func (ctx *actorContext) Done() <-chan struct{} {
@@ -35,8 +38,8 @@ func (ctx *actorContext) Handler() ActorHandler {
 	return ctx.handler
 }
 
-func (ctx *actorContext) Execute(receiver Receiver, opts ...Option) (Ref, error) {
-	hdl, err := ctx.Handler().ExecuteHandler(receiver, opts...)
+func (ctx *actorContext) Execute(receiver Receiver, name string, opts ...Option) (Ref, error) {
+	hdl, err := ctx.Handler().ExecuteHandler(receiver, name, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -63,20 +66,6 @@ func (ctx *actorContext) Get(key string) (interface{}, bool) {
 	return ctx.handler.Cache().Get(key)
 }
 
-func Name(name string) Option {
-	return Option{
-		Name: "name",
-		Value: name,
-	}
-}
-
-func Log(log Logger) Option {
-	return Option{
-		Name: "logger",
-		Value: log,
-	}
-}
-
 func WorkerPool(size int) Option {
 	return Option{
 		Name: "workerPool",
@@ -96,50 +85,6 @@ func Async() Option {
 		Name: "async",
 		Value: true,
 	}
-}
-
-type HandlerSettings struct {
-	Name string
-	WorkerPool int
-	MessageQueue int
-	Log Logger
-	Async bool
-}
-
-func newHandlerSettings(opts ...Option) HandlerSettings {
-	settings := HandlerSettings{
-		Name: GenerateName(),
-		Log: newLogger(),
-		WorkerPool: 1,
-		MessageQueue: 1000,
-	}
-
-	for _, opt := range opts {
-		switch opt.Name {
-		case "name":
-			if nm := opt.String(); nm != "" {
-				settings.Name = nm
-			}
-		case "logger":
-			if log, ok := opt.Value.(Logger); ok {
-				settings.Log = log
-			}
-		case "workerPool":
-			if wp, _ := opt.Int(); wp > 0 {
-				settings.WorkerPool = wp
-			}
-		case "messageQueue":
-			if mq, _ := opt.Int(); mq > 0 {
-				settings.MessageQueue = mq
-			}
-		case "async":
-			if asb, _ := opt.Bool(); asb {
-				settings.Async = true
-			}
-		}
-	}
-
-	return settings
 }
 
 func worker(ctx ActorContext, jobs <-chan Message, r Receiver, async bool) {
@@ -166,7 +111,7 @@ func worker(ctx ActorContext, jobs <-chan Message, r Receiver, async bool) {
 }
 
 type ActorHandlerExecutor interface {
-	ExecuteHandler(Receiver, ...Option) (ActorHandler, error)
+	ExecuteHandler(Receiver, string, ...Option) (ActorHandler, error)
 }
 
 type ActorHandler interface {
@@ -179,6 +124,7 @@ type ActorHandler interface {
 	Parent() (ActorHandler, bool)
 	System() System
 	Log() Logger
+	Settings() Settings
 
 	Child(string) (ActorHandler, bool)
 	Children() []ActorHandler
@@ -190,7 +136,8 @@ type ActorHandler interface {
 
 type handler struct {
 	sync.RWMutex
-	settings HandlerSettings
+	name string
+	settings ActorSettings
 	messages chan Message
 	receiver Receiver
 	system System
@@ -204,21 +151,26 @@ type handler struct {
 	cache Cache
 }
 
-func newHandler(system System, parent ActorHandler, receiver Receiver, options ...Option) *handler {
-	if actor, ok := receiver.(NamedActor); ok {
-		options = append(options, Name(actor.ActorName()))
+func newHandler(system System, parent ActorHandler, receiver Receiver, name string, options ...Option) *handler {
+	var log Logger
+	if parent != nil {
+		log = parent.Log().ForName(name)
+	} else {
+		log = system.Log().ForName(name)
 	}
+
 	if actor, ok := receiver.(AsyncActor); ok && actor.AsyncActor() {
 		options = append(options, Async())
 	}
-	settings := newHandlerSettings(options...)
+	settings := system.Settings().GetActorSettings(name, options...)
 	return &handler{
+		name: name,
 		settings: settings,
-		messages: make(chan Message, settings.MessageQueue),
+		messages: make(chan Message, settings.MessageQueueSize()),
 		receiver: receiver,
 		system: system,
 		parent: parent,
-		log: settings.Log.ForName(settings.Name),
+		log: log,
 		children: make(map[string]ActorHandler),
 		cache: NewCache(),
 	}
@@ -230,7 +182,6 @@ func (hdl *handler) createContext(name string, log Logger) ActorContext {
 
 	ctx := &actorContext{
 		name: hdl.Name(),
-		log: hdl.Log(),
 		handler: hdl,
 		self: hdl.CreateRef(),
 		done: make(chan struct{}),
@@ -241,7 +192,7 @@ func (hdl *handler) createContext(name string, log Logger) ActorContext {
 }
 
 func (hdl *handler) startup() error {
-	pool := hdl.settings.WorkerPool
+	pool := hdl.settings.WorkerPoolSize()
 	for i := 0; i < pool; i++ {
 		name := hdl.Name()
 		log := hdl.Log()
@@ -258,13 +209,13 @@ func (hdl *handler) startup() error {
 				return err
 			}
 		}
-		go worker(ctx, hdl.messages, hdl.receiver, hdl.settings.Async)
+		go worker(ctx, hdl.messages, hdl.receiver, hdl.settings.Async())
 	}
 	return nil
 }
 
 func (hdl *handler) Name() string {
-	return hdl.settings.Name
+	return hdl.name
 }
 
 func (hdl *handler) Push(msg Message) error {
@@ -332,6 +283,10 @@ func (hdl *handler) Log() Logger {
 	return hdl.log
 }
 
+func (hdl *handler) Settings() Settings {
+	return hdl.settings
+}
+
 func (hdl *handler) Child(name string) (ActorHandler, bool) {
 	hdl.RLock()
 	defer hdl.RUnlock()
@@ -357,11 +312,11 @@ func (hdl *handler) Cache() Cache {
 	return hdl.cache
 }
 
-func (hdl *handler) ExecuteHandler(receiver Receiver, opts ...Option) (ActorHandler, error) {
+func (hdl *handler) ExecuteHandler(receiver Receiver, name string, opts ...Option) (ActorHandler, error) {
 	hdl.Lock()
 	defer hdl.Unlock()
 
-	child := newHandler(hdl.System(), hdl, receiver, append(opts, Log(hdl.log))...)
+	child := newHandler(hdl.System(), hdl, receiver, name, opts...)
 	
 	if _, exists := hdl.children[child.Name()]; exists {
 		child.Close()

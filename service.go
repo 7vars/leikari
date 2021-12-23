@@ -1,5 +1,5 @@
 package leikari
 
 type ServiceExecutor interface {
-	ExecuteService(Receiver, ...Option) (ActorHandler, error)
+	ExecuteService(Receiver, string, ...Option) (ActorHandler, error)
 }

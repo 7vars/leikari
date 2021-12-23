@@ -27,29 +27,10 @@ func NoSignature() Option {
 	}
 }
 
-type SystemSettings struct {
-	NoSignature bool
-}
-
-func newSystemSettings(opts ...Option) SystemSettings {
-	settings := SystemSettings{
-	}
-
-	for _, opt := range opts {
-		switch opt.Name {
-		case "noSignature":
-			if nos, _ := opt.Bool(); nos {
-				settings.NoSignature = true
-			}
-		}
-	}
-
-	return settings
-}
-
 type System interface {
 	ActorExecutor
 	ServiceExecutor
+	Settings() SystemSettings
 	Log() Logger
 	Terminate()
 	Terminated() <-chan int
@@ -75,7 +56,7 @@ func NewSystem(opts ... Option) System {
 		log: newLogger(),
 	}
 
-	if !sys.settings.NoSignature {
+	if !sys.settings.NoSignature() {
 		fmt.Println(signature)
 	}
 
@@ -88,19 +69,19 @@ func NewSystem(opts ... Option) System {
 		sys.terminate(0)
 	}()
 
-	root := newHandler(sys, nil, root(), Log(sys.Log()))
+	root := newHandler(sys, nil, root(), "root")
 	if err := root.startup(); err != nil {
 		panic(err)
 	}
 	sys.root = root
 
-	usr, err := root.ExecuteHandler(usr())
+	usr, err := root.ExecuteHandler(usr(), "usr")
 	if err != nil {
 		panic(err)
 	}
 	sys.usr = usr
 
-	svc, err := root.ExecuteHandler(svc())
+	svc, err := root.ExecuteHandler(svc(), "svc")
 	if err != nil {
 		panic(err)
 	}
@@ -115,6 +96,10 @@ func (sys *system) terminate(sig int) {
 		time.Sleep(100 * time.Millisecond)
 		sys.exitChan <- sig
 	}()
+}
+
+func (sys *system) Settings() SystemSettings {
+	return sys.settings
 }
 
 func (sys *system) Log() Logger {
@@ -133,16 +118,16 @@ func (sys *system) Run() {
 	os.Exit(<-sys.Terminated())
 }
 
-func (sys *system) Execute(receiver Receiver, opts ...Option) (Ref, error) {
-	hdl, err := sys.usr.ExecuteHandler(receiver, opts...)
+func (sys *system) Execute(receiver Receiver, name string, opts ...Option) (Ref, error) {
+	hdl, err := sys.usr.ExecuteHandler(receiver, name, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return hdl.CreateRef(), nil
 }
 
-func (sys *system) ExecuteService(receiver Receiver, opts ...Option) (ActorHandler, error) {
-	return sys.svc.ExecuteHandler(receiver, opts...)
+func (sys *system) ExecuteService(receiver Receiver, name string, opts ...Option) (ActorHandler, error) {
+	return sys.svc.ExecuteHandler(receiver, name, opts...)
 }
 
 func (sys *system) Timer(d time.Duration, f func(time.Time)) *time.Timer {
@@ -166,7 +151,6 @@ func (sys *system) Ticker(d time.Duration, f func(time.Time)) *time.Ticker {
 
 func root() Actor {
 	return Actor{
-		Name: "root",
 		OnReceive: func(ac ActorContext, m Message) {
 			
 		},
@@ -181,7 +165,6 @@ func root() Actor {
 
 func usr() Actor {
 	return Actor{
-		Name: "usr",
 		OnReceive: func(ac ActorContext, m Message) {},
 		OnStart: func(ac ActorContext) error {
 			return nil
@@ -194,7 +177,6 @@ func usr() Actor {
 
 func svc() Actor {
 	return Actor{
-		Name: "svc",
 		OnReceive: func(ac ActorContext, m Message) {},
 		OnStart: func(ac ActorContext) error {
 			return nil

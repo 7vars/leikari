@@ -3,13 +3,14 @@ package leikari
 import "reflect"
 
 type ActorExecutor interface {
-	Execute(Receiver, ...Option) (Ref, error)
+	Execute(Receiver, string, ...Option) (Ref, error)
 }
 
 type ActorContext interface {
 	ActorExecutor
 	Name() string
 	Log() Logger
+	Settings() Settings
 	Done() <-chan struct{}
 
 	Self() Ref
@@ -40,16 +41,11 @@ type Stopable interface {
 	PostStop(ActorContext) error
 }
 
-type NamedActor interface {
-	ActorName() string
-}
-
 type AsyncActor interface {
 	AsyncActor() bool
 }
 
 type Actor struct {
-	Name string
 	OnReceive func(ActorContext, Message)
 	OnStart func(ActorContext) error
 	OnStop func(ActorContext) error
@@ -77,18 +73,12 @@ func (a Actor) PostStop(ctx ActorContext) error {
 	return nil
 }
 
-func (a Actor) ActorName() string {
-	return a.Name
-}
-
 func (a Actor) AsyncActor() bool {
 	return a.Async
 }
 
-func NewActor(v interface{}, name string) Actor {
-	actor := Actor{
-		Name: name,
-	}
+func NewActor(v interface{}) Actor {
+	actor := Actor{}
 	if ps, ok := v.(Startable); ok {
 		actor.OnStart = ps.PreStart
 	}

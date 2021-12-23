@@ -30,7 +30,7 @@ type Crud interface {
 	repository.QueryHandler
 }
 
-func newCrudActor(name string, handler interface{}) leikari.Actor {
+func newCrudActor(handler interface{}) leikari.Actor {
 	crfunc := func(leikari.ActorContext,CreateCommand) (*CreatedEvent, error) { return nil, ErrNotFound }
 	if cr, ok := handler.(CreateHandler); ok {
 		crfunc = cr.Create
@@ -95,7 +95,6 @@ func newCrudActor(name string, handler interface{}) leikari.Actor {
 
 
 	return leikari.Actor{
-		Name: name,
 		OnReceive: func(ctx leikari.ActorContext, msg leikari.Message) {
 			result, err := receive(ctx, msg.Value())
 			if err != nil {

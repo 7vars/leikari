@@ -59,10 +59,6 @@ func newRouteActor(router *mux.Router, def route.Route, middleware ...route.Midd
 	}
 }
 
-func (ra *routeActor) ActorName() string {
-	return ra.def.RouteName()
-}
-
 func (ra *routeActor) middlewares() []route.Middleware {
 	return append(ra.middleware, ra.def.RouteMiddleware()...)
 }
@@ -79,7 +75,7 @@ func (ra *routeActor) PreStart(ctx leikari.ActorContext) error {
 	if len(ra.def.Routes) > 0 {
 		subrouter := ra.router.PathPrefix(ra.def.Path).Subrouter()
 		for _, childRoute := range ra.def.Routes {
-			if _, err := ctx.Execute(newRouteActor(subrouter, childRoute, ra.middlewares()...)); err != nil {
+			if _, err := ctx.Execute(newRouteActor(subrouter, childRoute, ra.middlewares()...), childRoute.RouteName()); err != nil {
 				return err
 			}
 		}

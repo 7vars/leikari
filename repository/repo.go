@@ -19,7 +19,7 @@ func RepositoryService(system leikari.ActorExecutor, handler interface{}, name s
 		return nil, leikari.Errorln("", "handler must be a pointer")
 	}
 	
-	ref, err := system.Execute(newRepositoryActor(name, handler), opts...)
+	ref, err := system.Execute(newRepositoryActor(handler), name, opts...)
 	if err != nil {
 		return nil, err
 	}

@@ -20,7 +20,7 @@ func CrudService(system leikari.ActorExecutor, handler interface{}, name string,
 		return nil, route.Route{}, leikari.Errorln("", "handler must be a pointer")
 	}
 	
-	ref, err := system.Execute(newCrudActor(name, handler), opts...)
+	ref, err := system.Execute(newCrudActor(handler), name, opts...)
 	if err != nil {
 		return nil, route.Route{}, err
 	}

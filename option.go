@@ -2,6 +2,7 @@ package leikari
 
 import (
 	"fmt"
+	"time"
 )
 
 type Option struct {
@@ -75,5 +76,15 @@ func (opt Option) Float64() (float64, bool) {
 
 func (opt Option) Bool() (bool, bool) {
 	v, ok := opt.Value.(bool)
+	return v, ok
+}
+
+func (opt Option) Time() (time.Time, bool) {
+	v, ok := opt.Value.(time.Time)
+	return v, ok
+}
+
+func (opt Option) Duration() (time.Duration, bool) {
+	v, ok := opt.Value.(time.Duration)
 	return v, ok
 }
