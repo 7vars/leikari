@@ -2,6 +2,7 @@ package leikari
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -21,8 +22,14 @@ func initSettings() {
 
 		viper.ReadInConfig()
 
-		viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-		viper.AutomaticEnv()
+		for _, env := range os.Environ() {
+			if strings.HasPrefix(strings.ToLower(env), "leikari_") {
+				pair := strings.SplitN(env, "=", 2)
+				viper.Set(strings.ReplaceAll(strings.ToLower(pair[0]), "_", "."), pair[1])
+			}
+		}
+
+		fmt.Println(viper.AllSettings())
 		
 		settingsInit = true
 	}
@@ -204,5 +211,5 @@ func (as *actorSettings) Async() bool {
 }
 
 func init() {
-	viper.SetDefault("leikari.logLevel", "INFO")
+	viper.SetDefault("leikari.loglevel", "INFO")
 }
