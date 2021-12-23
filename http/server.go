@@ -46,12 +46,14 @@ func StopTimeout(t time.Duration) leikari.Option {
 }
 
 type server struct {
+	settings leikari.Settings
 	server *http.Server
 	def route.Route
 }
 
-func newServer(route route.Route, opts ...leikari.Option) *server {
+func newServer(sys leikari.System, route route.Route, opts ...leikari.Option) *server {
 	return &server{
+		settings: sys.Settings().GetSub("http"),
 		def: route,
 	}
 }
@@ -68,11 +70,11 @@ func (srv *server) PreStart(ctx leikari.ActorContext) error {
 		return err
 	}
 
-	addr := ctx.Settings().GetDefaultString("address", DEFAULT_HTTP_ADDRESS)
+	addr := srv.settings.GetDefaultString("address", DEFAULT_HTTP_ADDRESS)
 	srv.server = &http.Server{
 		Addr: addr,
-		ReadTimeout: ctx.Settings().GetDefaultDuration("readTimeout", DEFAULT_HTTP_READ_TIMEOUT),
-		WriteTimeout: ctx.Settings().GetDefaultDuration("writeTimeout", DEFAULT_HTTP_WRITE_TIMEOUT),
+		ReadTimeout: srv.settings.GetDefaultDuration("readTimeout", DEFAULT_HTTP_READ_TIMEOUT),
+		WriteTimeout: srv.settings.GetDefaultDuration("writeTimeout", DEFAULT_HTTP_WRITE_TIMEOUT),
 		Handler: router,
 	}
 	ctx.Log().Infof("http listen on %s", addr)
@@ -85,7 +87,7 @@ func (srv *server) PreStart(ctx leikari.ActorContext) error {
 }
 
 func (srv *server) PostStop(ctx leikari.ActorContext) error {
-	c, cancel := context.WithTimeout(context.Background(), ctx.Settings().GetDefaultDuration("stopTimeout", DEFAULT_HTTP_STOP_TIMEOUT))
+	c, cancel := context.WithTimeout(context.Background(), srv.settings.GetDefaultDuration("stopTimeout", DEFAULT_HTTP_STOP_TIMEOUT))
 	defer cancel()
 	return srv.server.Shutdown(c)
 }
@@ -94,5 +96,5 @@ func HttpServer(system leikari.System, route route.Route, opts ...leikari.Option
 	if err := route.Validate(); err != nil {
 		return nil, err
 	}
-	return system.ExecuteService(newServer(route), "http", opts...)
+	return system.ExecuteService(newServer(system, route), "http", opts...)
 }

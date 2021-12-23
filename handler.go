@@ -3,12 +3,14 @@ package leikari
 import (
 	"fmt"
 	"io"
+	"strings"
 	"sync"
 	"time"
 )
 
 type actorContext struct {
 	name string
+	log Logger
 	handler ActorHandler
 	self Ref
 	done chan struct{}
@@ -19,7 +21,7 @@ func (ctx *actorContext) Name() string {
 }
 
 func (ctx *actorContext) Log() Logger {
-	return ctx.handler.Log()
+	return ctx.log
 }
 
 func (ctx *actorContext) Settings() Settings {
@@ -122,6 +124,7 @@ type ActorHandler interface {
 
 	Root() ActorHandler
 	Parent() (ActorHandler, bool)
+	Path() string
 	System() System
 	Log() Logger
 	Settings() Settings
@@ -152,28 +155,31 @@ type handler struct {
 }
 
 func newHandler(system System, parent ActorHandler, receiver Receiver, name string, options ...Option) *handler {
-	var log Logger
-	if parent != nil {
-		log = parent.Log().ForName(name)
-	} else {
-		log = system.Log().ForName(name)
-	}
-
 	if actor, ok := receiver.(AsyncActor); ok && actor.AsyncActor() {
 		options = append(options, Async())
 	}
 	settings := system.Settings().GetActorSettings(name, options...)
-	return &handler{
+
+	hdl :=  &handler{
 		name: name,
 		settings: settings,
 		messages: make(chan Message, settings.MessageQueueSize()),
 		receiver: receiver,
 		system: system,
 		parent: parent,
-		log: log,
 		children: make(map[string]ActorHandler),
 		cache: NewCache(),
 	}
+
+	var log Logger
+	if parent != nil {
+		log = parent.Log().ForName(hdl.Path())
+	} else {
+		log = system.Log().ForName(hdl.Path())
+	}
+	hdl.log = log
+
+	return hdl
 }
 
 func (hdl *handler) createContext(name string, log Logger) ActorContext {
@@ -182,6 +188,7 @@ func (hdl *handler) createContext(name string, log Logger) ActorContext {
 
 	ctx := &actorContext{
 		name: hdl.Name(),
+		log: log,
 		handler: hdl,
 		self: hdl.CreateRef(),
 		done: make(chan struct{}),
@@ -194,14 +201,14 @@ func (hdl *handler) createContext(name string, log Logger) ActorContext {
 func (hdl *handler) startup() error {
 	pool := hdl.settings.WorkerPoolSize()
 	for i := 0; i < pool; i++ {
-		name := hdl.Name()
+		path := hdl.Path()
 		log := hdl.Log()
 		if pool > 1 {
-			name = fmt.Sprintf("%s-%d", name, i)
-			log = log.ForName(name)
+			path = fmt.Sprintf("%s-%d", path, i)
+			log = log.ForName(path)
 		}
 
-		ctx := hdl.createContext(name, log)
+		ctx := hdl.createContext(hdl.Name(), log)
 
 		if starter, ok := hdl.receiver.(Startable); ok {
 			if err := starter.PreStart(ctx); err != nil {
@@ -273,6 +280,18 @@ func (hdl *handler) Parent() (ActorHandler, bool) {
 		return hdl.parent, true
 	}
 	return nil, false
+}
+
+func (hdl *handler) Path() string {
+	p, ok := hdl.Parent()
+	if !ok {
+		return "/"
+	}
+	ppath := p.Path()
+	if strings.HasSuffix(ppath, "/") {
+		return ppath + hdl.Name()
+	}
+	return ppath + "/" + hdl.Name()
 }
 
 func (hdl *handler) System() System {

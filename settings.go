@@ -49,6 +49,8 @@ type Settings interface {
 	GetDefaultStringSlice(string, ...string) []string
 	GetDefaultTime(string, time.Time) time.Time
 	GetDefaultDuration(string, time.Duration) time.Duration
+
+	GetSub(string) Settings
 }
 
 type SystemSettings interface {
@@ -68,6 +70,13 @@ type ActorSettings interface {
 
 type defaultWrapper struct {
 	*viper.Viper
+}
+
+func (e *defaultWrapper) GetSub(key string) Settings {
+	if !e.IsSet(key) {
+		e.Set(key, make(map[string]interface{}))
+	}
+	return &defaultWrapper{e.Sub(key)}
 }
 
 func (w *defaultWrapper) GetDefault(key string, v interface{}) interface{} {

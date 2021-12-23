@@ -53,11 +53,12 @@ func NewSystem(opts ... Option) System {
 	sys := &system{
 		settings: newSystemSettings(opts...),
 		exitChan: make(chan int, 1),
-		log: newLogger(),
 	}
 
+	sys.log = newLogger(logLevel(sys.settings.GetDefaultString("loglevel", "INFO")))
+
 	if !sys.settings.NoSignature() {
-		fmt.Println(signature)
+		fmt.Printf("%s\r\n", signature)
 	}
 
 	sigs := make(chan os.Signal, 1)
