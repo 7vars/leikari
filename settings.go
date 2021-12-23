@@ -28,8 +28,6 @@ func initSettings() {
 				viper.Set(strings.ReplaceAll(strings.ToLower(pair[0]), "_", "."), pair[1])
 			}
 		}
-
-		fmt.Println(viper.AllSettings())
 		
 		settingsInit = true
 	}
