@@ -92,7 +92,7 @@ func (srv *server) PostStop(ctx leikari.ActorContext) error {
 	return srv.server.Shutdown(c)
 }
 
-func HttpServer(system leikari.System, route route.Route, opts ...leikari.Option) (leikari.ActorHandler, error) {
+func Http(system leikari.System, route route.Route, opts ...leikari.Option) (leikari.ActorHandler, error) {
 	if err := route.Validate(); err != nil {
 		return nil, err
 	}

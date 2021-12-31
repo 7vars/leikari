@@ -1,6 +1,8 @@
 package leikari
 
-import "context"
+import (
+	"context"
+)
 
 type Ref interface {
 	Send(interface{}) error
@@ -11,24 +13,36 @@ type Ref interface {
 }
 
 type ref struct {
-	pusher Pusher
+	messages chan<- Message
 }
 
-func NewRef(pusher Pusher) Ref {
+func newRef(messages chan<- Message) Ref {
 	return &ref{
-		pusher: pusher,
+		messages: messages,
 	}
+}
+
+func (r *ref) send(msg Message) (err error) {
+	defer func() {
+		if rec := recover(); rec != nil {
+			err = Errorf("", "message-channel is closed: %v", rec)
+		}
+	}()
+	r.messages <- msg
+	return
 }
 
 func (r *ref) Send(v interface{}) error {
-	return r.pusher.Push(Send(v))
+	return r.send(Send(v))
 }
 
 func (r *ref) RequestChan(v interface{}) <-chan interface{} {
-	reply := make(chan interface{})
-	if err := r.pusher.Push(Request(reply, v)); err != nil {
-		reply <- err
-	}
+	reply := make(chan interface{}, 1)
+	go func() {
+		if err := r.send(Request(reply, v)); err != nil {
+			reply <- err
+		}
+	}()
 	return reply
 }
 

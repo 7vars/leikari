@@ -30,6 +30,7 @@ func NoSignature() Option {
 type System interface {
 	ActorExecutor
 	ServiceExecutor
+	PubSub
 	Settings() SystemSettings
 	Log() Logger
 	Terminate()
@@ -45,6 +46,7 @@ type system struct {
 	log Logger
 	exitChan chan int
 	root ActorHandler
+	rootRef Ref
 	usr ActorHandler
 	svc ActorHandler
 }
@@ -75,6 +77,7 @@ func NewSystem(opts ... Option) System {
 		panic(err)
 	}
 	sys.root = root
+	sys.rootRef = root.CreateRef()
 
 	usr, err := root.ExecuteHandler(usr(), "usr")
 	if err != nil {
@@ -119,6 +122,30 @@ func (sys *system) Run() {
 	os.Exit(<-sys.Terminated())
 }
 
+func (sys *system) At(path string) (Ref, bool) {
+	if hdl, ok := sys.root.At(path); ok {
+		return hdl.CreateRef(), ok
+	}
+	return nil, false
+}
+
+func (sys *system) Subscribe(ref Ref, f func(interface{}) bool) {
+	sys.rootRef.Send(Subscribe{
+		Ref: ref,
+		Filter: f,
+	})
+}
+
+func (sys *system) Unsubscribe(ref Ref) {
+	sys.rootRef.Send(Unsubscribe{
+		Ref: ref,
+	})
+}
+
+func (sys *system) Publish(v interface{}) {
+	sys.rootRef.Send(Publish{v})
+}
+
 func (sys *system) Execute(receiver Receiver, name string, opts ...Option) (Ref, error) {
 	hdl, err := sys.usr.ExecuteHandler(receiver, name, opts...)
 	if err != nil {
@@ -148,20 +175,6 @@ func (sys *system) Ticker(d time.Duration, f func(time.Time)) *time.Ticker {
 		}
 	}(ticker)
 	return ticker
-}
-
-func root() Actor {
-	return Actor{
-		OnReceive: func(ac ActorContext, m Message) {
-			
-		},
-		OnStart: func(ac ActorContext) error {
-			return nil
-		},
-		OnStop: func(ac ActorContext) error {
-			return nil
-		},
-	}
 }
 
 func usr() Actor {

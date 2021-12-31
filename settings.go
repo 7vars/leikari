@@ -38,6 +38,7 @@ func initSettings() {
 
 type Settings interface {
 	Get(string) interface{}
+	Set(string, interface{})
 	GetBool(string) bool
 	GetFloat64(string) float64
 	GetInt(string) int
@@ -60,7 +61,7 @@ type Settings interface {
 	GetDefaultTime(string, time.Time) time.Time
 	GetDefaultDuration(string, time.Duration) time.Duration
 
-	GetSub(string) Settings
+	GetSub(string, ...Option) Settings
 }
 
 type SystemSettings interface {
@@ -82,11 +83,15 @@ type defaultWrapper struct {
 	*viper.Viper
 }
 
-func (e *defaultWrapper) GetSub(key string) Settings {
+func (e *defaultWrapper) GetSub(key string, opts ...Option) Settings {
 	if !e.IsSet(key) {
 		e.Set(key, make(map[string]interface{}))
 	}
-	return &defaultWrapper{e.Sub(key)}
+	sub := e.Sub(key)
+	for _, opt := range opts {
+		sub.Set(opt.Name, opt.Value)
+	}
+	return &defaultWrapper{sub}
 }
 
 func (w *defaultWrapper) GetDefault(key string, v interface{}) interface{} {
@@ -197,14 +202,20 @@ func newActorSettings(sub *viper.Viper, opts ...Option) ActorSettings {
 
 func (as *actorSettings) WorkerPoolSize() int {
 	if as.IsSet("workerPool") {
-		return as.GetInt("workerPool")
+		wp := as.GetInt("workerPool")
+		if wp > 0 {
+			return wp
+		}
 	}
 	return 1
 }
 
 func (as *actorSettings) MessageQueueSize() int {
 	if as.IsSet("messageQueue") {
-		return as.GetInt("messageQuere")
+		mq := as.GetInt("messageQueue")
+		if mq > 0 {
+			return mq
+		}
 	}
 	return 1000
 }

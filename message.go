@@ -40,7 +40,3 @@ func (r request) Value() interface{} {
 func (r request) Reply(v interface{}) {
 	r.reply <- v
 }
-
-type Pusher interface {
-	Push(Message) error
-}

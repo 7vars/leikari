@@ -2,7 +2,6 @@ package leikari
 
 import (
 	"fmt"
-	"io"
 	"strings"
 	"sync"
 	"time"
@@ -18,6 +17,10 @@ type actorContext struct {
 
 func (ctx *actorContext) Name() string {
 	return ctx.name
+}
+
+func (ctx *actorContext) System() System {
+	return ctx.Handler().System()
 }
 
 func (ctx *actorContext) Log() Logger {
@@ -38,6 +41,25 @@ func (ctx *actorContext) Self() Ref {
 
 func (ctx *actorContext) Handler() ActorHandler {
 	return ctx.handler
+}
+
+func (ctx *actorContext) At(path string) (Ref, bool) {
+	if hdl, ok := ctx.handler.At(path); ok {
+		return hdl.CreateRef(), ok
+	}
+	return nil, false
+}
+
+func (ctx *actorContext) Subscribe(ref Ref, f func(interface{}) bool) {
+	ctx.System().Subscribe(ref, f)
+}
+
+func (ctx *actorContext) Unsubscribe(ref Ref) {
+	ctx.System().Unsubscribe(ref)
+}
+
+func (ctx *actorContext) Publish(v interface{}) {
+	ctx.System().Publish(v)
 }
 
 func (ctx *actorContext) Execute(receiver Receiver, name string, opts ...Option) (Ref, error) {
@@ -113,11 +135,11 @@ func worker(ctx ActorContext, jobs <-chan Message, r Receiver, async bool) {
 }
 
 type ActorHandlerExecutor interface {
+	At(string) (ActorHandler, bool)
 	ExecuteHandler(Receiver, string, ...Option) (ActorHandler, error)
 }
 
 type ActorHandler interface {
-	Pusher
 	ActorHandlerExecutor
 	Name() string
 	Close()
@@ -179,6 +201,8 @@ func newHandler(system System, parent ActorHandler, receiver Receiver, name stri
 	}
 	hdl.log = log
 
+	log.Debug("actor", hdl.name, "with", "message-queue-size:", settings.MessageQueueSize(), ", worker-pool:", settings.WorkerPoolSize(), "created")
+
 	return hdl
 }
 
@@ -223,17 +247,6 @@ func (hdl *handler) startup() error {
 
 func (hdl *handler) Name() string {
 	return hdl.name
-}
-
-func (hdl *handler) Push(msg Message) error {
-	hdl.RLock()
-	defer hdl.RUnlock()
-
-	if hdl.closed {
-		return io.EOF
-	}
-	hdl.messages <- msg
-	return nil
 }
 
 func (hdl *handler) Close() {
@@ -324,7 +337,44 @@ func (hdl *handler) Children() []ActorHandler {
 }
 
 func (hdl *handler) CreateRef() Ref {
-	return NewRef(hdl)
+	return newRef(hdl.messages)
+}
+
+func (hdl *handler) At(path string) (ActorHandler, bool) {
+	if len(path) > 0 {
+		if path[0] == '/' {
+			if len(path) == 1 {
+				return hdl.Root(), true
+			}
+			return hdl.Root().At(path[1:])
+		} else if len(path) >= 2 && path[0:2] == ".." && hdl.parent != nil {
+			if len(path) == 2 || path == "../" {
+				return hdl.parent, true
+			}
+			return hdl.parent.At(path[3:])
+		} else if path[0] == '.' || strings.HasPrefix(path, hdl.name) {
+			if i := strings.IndexRune(path, '/'); i > -1 {
+				if i < len(path)-1 {
+					return hdl.At(path[i+1:])
+				}
+			} else {
+				return hdl, true
+			}
+		} else {
+			if i := strings.IndexRune(path, '/'); i != -1 {
+				child, ok := hdl.Child(path[:i])
+				if !ok {
+					return nil, false
+				}
+				if i < len(path)-1 {
+					return child.At(path[i+1:])
+				}
+				return child, true
+			}
+			return hdl.Child(path)
+		}
+	}
+	return nil, false
 }
 
 func (hdl *handler) Cache() Cache {

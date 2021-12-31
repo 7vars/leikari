@@ -247,7 +247,7 @@ func main() {
 		Routes: []route.Route{ coutryRoute },
 	}
 
-	_, err = lhttp.HttpServer(sys, route)
+	_, err = lhttp.Http(sys, route)
 	if err != nil {
 		panic(err)
 	}

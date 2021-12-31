@@ -3,12 +3,15 @@ package leikari
 import "reflect"
 
 type ActorExecutor interface {
+	At(string) (Ref, bool)
 	Execute(Receiver, string, ...Option) (Ref, error)
 }
 
 type ActorContext interface {
 	ActorExecutor
+	PubSub
 	Name() string
+	System() System
 	Log() Logger
 	Settings() Settings
 	Done() <-chan struct{}
